@@ -2573,6 +2573,9 @@ void __init set_dma_reserve(unsigned long new_dma_reserve)
 	dma_reserve = new_dma_reserve;
 }
 
+// mkk mem:
+// 从 start_pfn 开始，尽可能用最大对齐块 (2^order) 来分割内存区间, 
+// 每分割一个块，就调用 memblock_free_pages() 释放到 buddy system
 void __init memblock_free_pages(struct page *page, unsigned long pfn,
 							unsigned int order)
 {
@@ -2779,10 +2782,17 @@ void __init mm_core_init(void)
 	mem_debugging_and_hardening_init();
 	kfence_alloc_pool_and_metadata();
 	report_meminit();
-	kmsan_init_shadow();
+	// Kernel Memory Sanitizer: 是 Linux 内核中的一种 动态内存未初始化检测工具
+	// https://docs.kernel.org/dev-tools/kmsan.html
+	kmsan_init_shadow(); // mkk mem: 为整个内核地址空间分配 shadow/origin 物理内存
 	stack_depot_early_init();
-	mem_init();
+	// mkk mem: 在 mem_init() 之前, 主流使用 memblock 管理内存, https://tinylab.org/riscv-memblock/.
+	mem_init(); // mkk mem: main function for release free pages to buddy system
 	mem_init_print_info();
+	/* 
+     * mkk mem: slub/slab init, kmalloc_caches 集合的 init, 这里还完成了 slub 的自举.
+     * 在这里之后我们可以开始使用 kmalloc 了(guess, 需要测试一下).
+     */
 	kmem_cache_init();
 	/*
 	 * page_owner must be initialized after buddy is ready, and also after

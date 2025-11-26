@@ -2216,6 +2216,8 @@ void __init reset_all_zones_managed_pages(void)
 /**
  * memblock_free_all - release free pages to the buddy allocator
  */
+// memblock_free_all() -> memblock_free_pages() -> __free_pages_core() -> __free_pages_ok()
+// -> __free_one_page()
 void __init memblock_free_all(void)
 {
 	unsigned long pages;
@@ -2223,7 +2225,7 @@ void __init memblock_free_all(void)
 	free_unused_memmap();
 	reset_all_zones_managed_pages();
 
-	pages = free_low_memory_core_early();
+	pages = free_low_memory_core_early(); // mkk mem: 把所有 memblock 中可用的低端物理内存加入 buddy system
 	totalram_pages_add(pages);
 }
 

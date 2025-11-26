@@ -166,6 +166,22 @@ static void __init print_vm_layout(void)
 static void print_vm_layout(void) { }
 #endif /* CONFIG_DEBUG_VM */
 
+/* concept:
+ *
+ * UMA and NUMA: https://blog.csdn.net/weixin_44395686/article/details/107172212
+ * NUMA 模式下, CPU 被划分成多个 node,  每个 node 被分配有的本地存储器空间,
+ * 所有 node 中的处理器都可以访问全部的系统物理存储器, 但是访问本节点内的存储器所需要的时间, 
+ * 比访问某些远程节点内的存储器所花的时间要少得多
+ * 
+ * UMA 模式下, mem 被所有 CPU 均匀共享.
+ * 
+ * Zone: 
+ * 对物理内存进行划分的逻辑区域, 主要用于解决不同类型的内存具有不同访问限制和使用场景的问题
+ * 场景划分: https://elixir.bootlin.com/linux/v6.6.117/source/include/linux/mmzone.h#L720
+ * 
+ * struct pg_data_t: https://elixir.bootlin.com/linux/v6.6.117/source/include/linux/mmzone.h#L1406
+ * 每个 node 被关联到一个 pg_data_t 类型的实例, 每个 node 被加入到以 NULL 结尾的 pgdat_list 链表中.
+ */
 void __init mem_init(void)
 {
 #ifdef CONFIG_FLATMEM
@@ -173,7 +189,7 @@ void __init mem_init(void)
 #endif /* CONFIG_FLATMEM */
 
 	swiotlb_init(max_pfn > PFN_DOWN(dma32_phys_limit), SWIOTLB_VERBOSE);
-	memblock_free_all();
+	memblock_free_all(); // mkk mem: 把所有 memblock 中的 free pages 的物理内存加入到 buddy system.
 
 	print_vm_layout();
 }

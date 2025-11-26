@@ -405,7 +405,7 @@ __find_buddy_pfn(unsigned long page_pfn, unsigned int order)
 static inline struct page *find_buddy_page_pfn(struct page *page,
 			unsigned long pfn, unsigned int order, unsigned long *buddy_pfn)
 {
-	unsigned long __buddy_pfn = __find_buddy_pfn(pfn, order);
+	unsigned long __buddy_pfn = __find_buddy_pfn(pfn, order); // mkk mem: pfn ^ (1 << order);
 	struct page *buddy;
 
 	buddy = page + (__buddy_pfn - pfn);

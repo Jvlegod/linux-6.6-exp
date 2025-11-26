@@ -347,7 +347,7 @@ static inline void stat(const struct kmem_cache *s, enum stat_item si)
  * differ during memory hotplug/hotremove operations.
  * Protected by slab_mutex.
  */
-static nodemask_t slab_nodes;
+static nodemask_t slab_nodes; // mkk mem: SLUB 目前实际已经初始化并可使用的 NUMA node
 
 #ifndef CONFIG_SLUB_TINY
 /*
@@ -5014,6 +5014,7 @@ static int slab_memory_callback(struct notifier_block *self,
 static struct kmem_cache * __init bootstrap(struct kmem_cache *static_cache)
 {
 	int node;
+	// mkk mem: 这里的 kmem_cache 比较特殊, 不在 kmem_caches 当中, 这里的这个 cache 是一个 kmem_cache 类型的 cache.
 	struct kmem_cache *s = kmem_cache_zalloc(kmem_cache, GFP_NOWAIT);
 	struct kmem_cache_node *n;
 
@@ -5025,9 +5026,11 @@ static struct kmem_cache * __init bootstrap(struct kmem_cache *static_cache)
 	 * IPIs around.
 	 */
 	__flush_cpu_slab(s, smp_processor_id());
+    // mkk mem: kmem_cache 是一个缓存类型的 cache, 下面指向很多个 NUMA node, 每个 node 都有一个 kmem_cache_node
+	// https://www.cnblogs.com/LoyenWang/p/11922887.html 这里可以简单看关系.
 	for_each_kmem_cache_node(s, node, n) {
 		struct slab *p;
-
+        // mkk mem: 这里只便利 partial slab 是因为 full slab 不需要链表管理, free slab 会被直接释放掉, 这里不需要修正. 
 		list_for_each_entry(p, &n->partial, slab_list)
 			p->slab_cache = s;
 
@@ -5042,6 +5045,8 @@ static struct kmem_cache * __init bootstrap(struct kmem_cache *static_cache)
 
 void __init kmem_cache_init(void)
 {
+	// mkk mem: bss 区的静态对象 boot_kmem_cache, boot_kmem_cache_node.
+	// 这俩变量是为了完成 slab cache 的自举临时使用的一个空间.
 	static __initdata struct kmem_cache boot_kmem_cache,
 		boot_kmem_cache_node;
 	int node;
@@ -5062,26 +5067,27 @@ void __init kmem_cache_init(void)
 	 */
 	for_each_node_state(node, N_NORMAL_MEMORY)
 		node_set(node, slab_nodes);
-
+	// mkk mem: 创建的第一个 slab cache
 	create_boot_cache(kmem_cache_node, "kmem_cache_node",
 		sizeof(struct kmem_cache_node), SLAB_HWCACHE_ALIGN, 0, 0);
 
 	hotplug_memory_notifier(slab_memory_callback, SLAB_CALLBACK_PRI);
 
 	/* Able to allocate the per node structures */
-	slab_state = PARTIAL;
-
+	slab_state = PARTIAL; // mkk mem: 表示 SLUB 已经能进行部分 slab 操作
+	// mkk mem: 创建的第二个 slab cache
 	create_boot_cache(kmem_cache, "kmem_cache",
 			offsetof(struct kmem_cache, node) +
 				nr_node_ids * sizeof(struct kmem_cache_node *),
 		       SLAB_HWCACHE_ALIGN, 0, 0);
-
+	
+	// mkk mem: bootstrap() 将 boot cache 转换为正常的 slab cache.
 	kmem_cache = bootstrap(&boot_kmem_cache);
 	kmem_cache_node = bootstrap(&boot_kmem_cache_node);
 
 	/* Now we can use the kmem_cache to allocate kmalloc slabs */
 	setup_kmalloc_cache_index_table();
-	create_kmalloc_caches(0);
+	create_kmalloc_caches(0); // mkk mem: full fill kmalloc_caches struct.
 
 	/* Setup random freelists for each cache */
 	init_freelist_randomization();

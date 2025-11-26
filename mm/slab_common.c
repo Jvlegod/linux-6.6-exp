@@ -37,7 +37,7 @@
 enum slab_state slab_state;
 LIST_HEAD(slab_caches);
 DEFINE_MUTEX(slab_mutex);
-struct kmem_cache *kmem_cache;
+struct kmem_cache *kmem_cache; // mkk mem: var keme_cache here
 
 static LIST_HEAD(slab_caches_to_rcu_destroy);
 static void slab_caches_to_rcu_destroy_workfn(struct work_struct *work);
@@ -654,6 +654,7 @@ static struct kmem_cache *__init create_kmalloc_cache(const char *name,
 	return s;
 }
 
+// mkk mem: kmalloc-N caches kmalloc_caches[type][index], 每个元算是一个 “struct kmem_cache *”
 struct kmem_cache *
 kmalloc_caches[NR_KMALLOC_TYPES][KMALLOC_SHIFT_HIGH + 1] __ro_after_init =
 { /* initialization for https://bugs.llvm.org/show_bug.cgi?id=42570 */ };
@@ -838,6 +839,17 @@ const struct kmalloc_info_struct kmalloc_info[] __initconst = {
  * Make sure that nothing crazy happens if someone starts tinkering
  * around with ARCH_KMALLOC_MINALIGN
  */
+/* mkk mem:
+ * 在 SLUB 体系里，kmalloc()会根据 size 找到一个 index, 根据 index 找到 kmem_cache
+ * kmalloc-8, kmalloc-16
+ * kmalloc-32, kmalloc-64
+ * kmalloc-96, kmalloc-128
+ * kmalloc-192, kmalloc-256
+ * kmalloc-512
+ * ...
+ * 这里其实在修改的 size_index 实际上是映射 kmalloc cache 的要求(这里的描述略抽象,
+ * 可以索引一下 size_index 的定义一目了然).
+ */
 void __init setup_kmalloc_cache_index_table(void)
 {
 	unsigned int i;
@@ -853,6 +865,7 @@ void __init setup_kmalloc_cache_index_table(void)
 		size_index[elem] = KMALLOC_SHIFT_LOW;
 	}
 
+	// mkk mem: 如果现在有最小的对齐要求, 一些 cache 就没有意义了.
 	if (KMALLOC_MIN_SIZE >= 64) {
 		/*
 		 * The 96 byte sized cache is not used if the alignment
