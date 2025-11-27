@@ -3427,6 +3427,10 @@ void *__kmem_cache_alloc_lru(struct kmem_cache *cachep, struct list_lru *lru,
 	return ret;
 }
 
+/*
+ * mkk mem: 在 kmem_cache_create 之后支配 cache 空间.
+ * kmem_cache_free 是 kmem_cache_alloc 的逆过程.
+ */
 void *kmem_cache_alloc(struct kmem_cache *cachep, gfp_t flags)
 {
 	return __kmem_cache_alloc_lru(cachep, NULL, flags);

@@ -2535,7 +2535,7 @@ static void vmap_init_free_space(void)
 	 *  |<--------------------------------->|
 	 */
 	list_for_each_entry(busy, &vmap_area_list, list) {
-		if (busy->va_start - vmap_start > 0) {
+		if (busy->va_start - vmap_start > 0) { // mkk mem: 发现中间有 free 区域.
 			free = kmem_cache_zalloc(vmap_area_cachep, GFP_NOWAIT);
 			if (!WARN_ON_ONCE(!free)) {
 				free->va_start = vmap_start;
@@ -4470,6 +4470,10 @@ module_init(proc_vmalloc_init);
 
 #endif
 
+/*
+ * mkk mem: 这里我们可以看到 vmalloc 的元数据也是使用的 slab 存储的, 但是实际的分配还是采用的 buddy system.
+ * 所以 vmalloc 也是和分配大数据.
+ */
 void __init vmalloc_init(void)
 {
 	struct vmap_area *va;
@@ -4495,6 +4499,10 @@ void __init vmalloc_init(void)
 	}
 
 	/* Import existing vmlist entries. */
+	/*
+	 * mkk mem: 早期 vmlist 在 vmalloc 还没初始化之前就可能存在了.
+	 * riscv 目前好像没有看到相关存在.
+	 */
 	for (tmp = vmlist; tmp; tmp = tmp->next) {
 		va = kmem_cache_zalloc(vmap_area_cachep, GFP_NOWAIT);
 		if (WARN_ON_ONCE(!va))

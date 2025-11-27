@@ -2803,7 +2803,7 @@ void __init mm_core_init(void)
 	ptlock_cache_init();
 	pgtable_cache_init();
 	debug_objects_mem_init();
-	vmalloc_init();
+	vmalloc_init(); // mkk mem: vmalloc 子系统初始化
 	/* If no deferred init page_ext now, as vmap is fully initialized */
 	if (!deferred_struct_pages)
 		page_ext_init();
