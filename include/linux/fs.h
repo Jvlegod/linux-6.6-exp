@@ -638,6 +638,17 @@ struct fsnotify_mark_connector;
  * the RCU path lookup and 'stat' data) fields at the beginning
  * of the 'struct inode'
  */
+/*
+ * mkk fs:
+ * r_dev: 设备的标志号
+ * i_Size: 文件的大小
+ * i_nlink: 与该节点建立链接的文件数
+ * i_atime: 文件的最后访问时间
+ * i_mtime: 文件的最后修改时间
+ * i_ctime: 节点的修改时间
+ * i_op: 索引节点相关操作(文件自身的操作)
+ * i_fop: 该索引节点对应文件的操作(已打开文件的操作)
+ */
 struct inode {
 	umode_t			i_mode;
 	unsigned short		i_opflags;
@@ -1187,6 +1198,13 @@ struct sb_writers {
 	struct percpu_rw_semaphore	rw_sem[SB_FREEZE_LEVELS];
 };
 
+/*
+ * mkk fs: https://lrita.github.io/images/posts/filesystem/Linux.Virtual.Filesystem.pdf
+ * s_blocksize: 文件系统中数据块的大小
+ * s_list: 串联文件系统 super_block 的链表
+ * s_maxbytes: 文件的最大长度
+ * super_operations: 操作
+ */
 struct super_block {
 	struct list_head	s_list;		/* Keep this first */
 	dev_t			s_dev;		/* search index; _not_ kdev_t */

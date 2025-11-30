@@ -96,6 +96,16 @@ static struct file_system_type sysfs_fs_type = {
 
 int __init sysfs_init(void)
 {
+    /*
+     * mkk fs: 结构可能如下.
+     * kernfs_root
+     * │
+     * └── kernfs_node（目录）
+     *    │
+     *    ├── kernfs_node（子目录）
+     *    ├── kernfs_node（属性文件）
+     *    └── kernfs_node（符号链接）
+     */
 	int err;
 
 	sysfs_root = kernfs_create_root(NULL, KERNFS_ROOT_EXTRA_OPEN_PERM_CHECK,

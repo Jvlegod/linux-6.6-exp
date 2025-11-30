@@ -3304,6 +3304,9 @@ static void __init dcache_init_early(void)
 static void __init dcache_init(void)
 {
 	/*
+	 * mkk fs: 这里 dentry_cache 是 dentry 对象的内存池, dentry_hashtable 用于 lookup.
+	 */
+	/*
 	 * A constructor could be added for stable state like the lists,
 	 * but it is probably not worth it because of the cache nature
 	 * of the dcache.
@@ -3315,7 +3318,10 @@ static void __init dcache_init(void)
 	/* Hash may have been set up in dcache_init_early */
 	if (!hashdist)
 		return;
-
+    /* mkk fs: 这里我们使用 alloc_large_system_hash 而不是 slab, 可能是因为这里的 hashtable 非常大
+	 * 这里 alloc_large_system_hash 好像有三种方式
+	 * memblock_alloc, vmalloc_huge, alloc_pages_exact
+	 */
 	dentry_hashtable =
 		alloc_large_system_hash("Dentry cache",
 					sizeof(struct hlist_bl_head),
@@ -3346,10 +3352,11 @@ void __init vfs_caches_init_early(void)
 
 void __init vfs_caches_init(void)
 {
+	/* mkk fs: 创建用于保存文件路径名的 cache */
 	names_cachep = kmem_cache_create_usercopy("names_cache", PATH_MAX, 0,
 			SLAB_HWCACHE_ALIGN|SLAB_PANIC, 0, PATH_MAX, NULL);
 
-	dcache_init();
+	dcache_init(); /* mkk fs: dentry cache 的初始化 */
 	inode_init();
 	files_init();
 	files_maxfiles_init();

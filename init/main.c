@@ -1067,7 +1067,7 @@ void start_kernel(void)
 	security_init();
 	dbg_late_init();
 	net_ns_init();
-	vfs_caches_init();
+	vfs_caches_init(); /* mkk fs: 从这里开始正式初始化 VFS */
 	pagecache_init();
 	signals_init();
 	seq_file_init();

@@ -4780,17 +4780,26 @@ void __init mnt_init(void)
 
 	if (!mount_hashtable || !mountpoint_hashtable)
 		panic("Failed to allocate mount hash table\n");
-
+    
+	/*
+	 * mkk fs: 伪文件统核心的初始化, 提供了一组函数, 下面的 /sysfs 初始化需要用到.
+	 * 实际上这里 kernfs 的初始化只是创建了 kernfs_node_cache 和 kernfs_iattrs_cache 两个缓存.
+	 */
 	kernfs_init();
 
+	/* mkk fs: /sys 文件系统的初始化 */
 	err = sysfs_init();
 	if (err)
 		printk(KERN_WARNING "%s: sysfs_init error: %d\n",
 			__func__, err);
+	/*
+	 * mkk fs: 这里我们就可以看见 /sys/fs 了
+	 * kobject_create_and_add 依赖 /sys 的初始化.
+	 */
 	fs_kobj = kobject_create_and_add("fs", NULL);
 	if (!fs_kobj)
 		printk(KERN_WARNING "%s: kobj create error\n", __func__);
-	shmem_init();
+	shmem_init(); /* mkk fs: tmpfs/shmem 初始化, 之后就可以挂载 tmpfs 了 */
 	init_rootfs();
 	init_mount_tree();
 }

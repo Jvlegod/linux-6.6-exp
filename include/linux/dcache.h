@@ -79,6 +79,10 @@ extern const struct qstr dotdot_name;
 
 #define d_lock	d_lockref.lock
 
+/*
+ * mkk fs: 目录项
+ * 
+ */
 struct dentry {
 	/* RCU lookup touched fields */
 	unsigned int d_flags;		/* protected by d_lock */
