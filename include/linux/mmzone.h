@@ -717,6 +717,16 @@ struct per_cpu_nodestat {
 
 #endif /* !__GENERATING_BOUNDS.H */
 
+/*
+ * mkk mem: Zone 是对物理地址空间的功能划分.
+ * ZONE_DMA: 范围通常是 0-16MB, 古老的 ISA 总线设备在进行 DMA 的时候, 只能使用 24 位地址线, 因此最多寻址到 2^24 = 16MB.
+ * ZONE_DMA32: 一些设备扩展到了 4GB.
+ * ZONE_NORMAL: 这部分区域被通过一个固定的便宜量直接映射到内核的虚拟地址空间, 因此访问这里的时候不需要复杂的计算, 效率比较高.
+ * 对于 64 位设备, 这部分区域非常大, 甚至可能是唯一的内存区, 对于 32 位系统, 这里通常很小. 内核代码, 数据, kmalloc 的区域大多来自这里.
+ * ZONE_HIGHMEM: 32 位的产物, 64 位不需要.
+ * ZONE_MOVABLE: 为了解决内存碎片化的问题, 内存压缩和迁移可以将这个区域里的页面移动, 整理.
+ * ZONE_DEVICE: 为一些特殊的设备, 比如 GPU 准备的区域.
+ */
 enum zone_type {
 	/*
 	 * ZONE_DMA and ZONE_DMA32 are used when there are peripherals not able
@@ -812,6 +822,10 @@ enum zone_type {
 
 #define ASYNC_AND_SYNC 2
 
+/*
+ * mkk mem: Zone 区域管理
+ * _watermark: 通过 _wmark_pages(zone) 访问, 对应 /proc/zoneinfo 中的 min, low, high.
+ */
 struct zone {
 	/* Read-mostly fields */
 
@@ -1262,6 +1276,31 @@ struct memory_failure_stats {
  *
  * Memory statistics and page replacement data structures are maintained on a
  * per-zone basis.
+ * mkk mem: 描述 Node 的结构体.
+ * 内存管理=>
+ * node_zones: 本节点的所有内存区域.
+ * node_zonelists: 所有节点的区域列表.
+ * nr_zones: 实际使用的 zones 数量.
+ * 内存映射=>
+ * node_mem_map: 本节点所有物理页的描述符数组.
+ * node_page_ext: 页的扩展信息.
+ * 内存范围信息=>
+ * node_start_pfn: 本节点页的起始页帧号.
+ * node_present_pages: 可以使用的物理页数.
+ * node_spanned_pages: 节点ID.
+ * 页面回收相关=>
+ * kswapd_wait: 
+ * kswapd: 
+ * kswapd_order: 
+ * kswapd_highest_zoneidx: 
+ * 内存压缩=>
+ * kcompactd_wait: 
+ * kcompactd: 
+ * 锁机制=>
+ * node_size_lock: 
+ * 内存统计=>
+ * per_cpu_nodestats: CPU节点统计.
+ * vm_stat: 节点级别的 VM 统计.
  */
 typedef struct pglist_data {
 	/*
